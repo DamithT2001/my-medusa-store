@@ -52,6 +52,7 @@ const BlogForm = ({
 }: BlogFormProps) => {
   const [values, setValues] = useState<BlogPostFormValues>(mergeValues(initialValues))
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [uploadingField, setUploadingField] = useState<"image" | null>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
 
@@ -64,6 +65,7 @@ const BlogForm = ({
       ...current,
       [field]: value,
     }))
+    setSuccess(null)
   }
 
   const uploadImage = async (file: File) => {
@@ -108,9 +110,11 @@ const BlogForm = ({
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
+    setSuccess(null)
 
     try {
       await onSubmit(values)
+      setSuccess("Post saved successfully.")
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Failed to save the post.")
     }
@@ -129,6 +133,12 @@ const BlogForm = ({
         {error ? (
           <div className="rounded-md border border-ui-fg-error bg-ui-bg-error px-4 py-3 text-sm text-ui-fg-error">
             {error}
+          </div>
+        ) : null}
+
+        {success ? (
+          <div className="rounded-md border border-ui-fg-success bg-ui-bg-success px-4 py-3 text-sm text-ui-fg-success">
+            {success}
           </div>
         ) : null}
 
@@ -249,7 +259,7 @@ const BlogForm = ({
             className="rounded-md bg-ui-bg-interactive px-4 py-2 text-sm font-medium text-ui-fg-on-inverted disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Saving..." : submitLabel}
+            {isSubmitting ? "Saving changes..." : submitLabel}
           </button>
 
           {onDelete ? (
