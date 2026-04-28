@@ -84,7 +84,8 @@ const BlogForm = ({
     event: ChangeEvent<HTMLInputElement>,
     field: "image"
   ) => {
-    const file = event.currentTarget.files?.[0]
+    const input = event.currentTarget
+    const file = input.files?.[0]
 
     if (!file) {
       return
@@ -100,7 +101,7 @@ const BlogForm = ({
       setError(uploadError instanceof Error ? uploadError.message : "Failed to upload image.")
     } finally {
       setUploadingField(null)
-      event.currentTarget.value = ""
+      input.value = ""
     }
   }
 
@@ -239,7 +240,7 @@ const BlogForm = ({
               {uploadingField === "image" ? "Uploading..." : "Upload image"}
             </button>
           </label>
-          
+
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
