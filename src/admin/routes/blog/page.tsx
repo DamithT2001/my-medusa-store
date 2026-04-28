@@ -11,7 +11,6 @@ type BlogPost = {
   slug: string
   content: string
   image: string
-  thumbnail: string
   author: string
   category: string
   date: string
@@ -79,9 +78,9 @@ const BlogListPage = () => {
                     <tr key={post.id}>
                       <td className="px-4 py-4">
                         <div className="flex items-start gap-3">
-                          {post.thumbnail ? (
+                          {post.image ? (
                             <img
-                              src={post.thumbnail}
+                              src={post.image}
                               alt={post.title}
                               className="h-12 w-12 rounded-md object-cover"
                             />
