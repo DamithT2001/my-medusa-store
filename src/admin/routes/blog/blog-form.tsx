@@ -8,6 +8,7 @@ export type BlogPostFormValues = {
   slug: string
   content: string
   image: string
+  tags: string
   author: string
   category: string
   date: string
@@ -30,6 +31,7 @@ const defaultValues: BlogPostFormValues = {
   slug: "",
   content: "",
   image: "",
+  tags: "",
   author: "",
   category: "",
   date: new Date().toISOString().slice(0, 10),
@@ -56,6 +58,11 @@ const BlogForm = ({
   const [uploadingField, setUploadingField] = useState<"image" | null>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
 
+  const tagList = values.tags
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+
   useEffect(() => {
     setValues(mergeValues(initialValues))
   }, [initialValues])
@@ -66,6 +73,24 @@ const BlogForm = ({
       [field]: value,
     }))
     setSuccess(null)
+  }
+
+  const updateTags = (nextTags: string[]) => {
+    updateField("tags", nextTags.join(", "))
+  }
+
+  const addTag = (tag: string) => {
+    const trimmedTag = tag.trim()
+
+    if (!trimmedTag || tagList.includes(trimmedTag)) {
+      return
+    }
+
+    updateTags([...tagList, trimmedTag])
+  }
+
+  const removeTag = (tagToRemove: string) => {
+    updateTags(tagList.filter((tag) => tag !== tagToRemove))
   }
 
   const uploadImage = async (file: File) => {
@@ -144,7 +169,7 @@ const BlogForm = ({
 
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-2">
-            <span className="text-sm font-medium">Title</span>
+            <span className="text-sm font-medium">Title <span className="text-ui-fg-error">*</span></span>
             <input
               className="w-full rounded-md border border-ui-border-base bg-ui-bg-field px-3 py-2 text-sm outline-none transition focus:border-ui-border-interactive"
               value={values.title}
@@ -154,22 +179,24 @@ const BlogForm = ({
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium">Slug</span>
+            <span className="text-sm font-medium">Slug <span className="text-ui-fg-error">*</span></span>
             <input
               className="w-full rounded-md border border-ui-border-base bg-ui-bg-field px-3 py-2 text-sm outline-none transition focus:border-ui-border-interactive"
               value={values.slug}
               onChange={(event) => updateField("slug", event.target.value)}
               placeholder="post-slug"
+              required
             />
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium">Author</span>
+            <span className="text-sm font-medium">Author <span className="text-ui-fg-error">*</span></span>
             <input
               className="w-full rounded-md border border-ui-border-base bg-ui-bg-field px-3 py-2 text-sm outline-none transition focus:border-ui-border-interactive"
               value={values.author}
               onChange={(event) => updateField("author", event.target.value)}
               placeholder="Admin User"
+              required
             />
           </label>
 
@@ -250,6 +277,34 @@ const BlogForm = ({
               {uploadingField === "image" ? "Uploading..." : "Upload image"}
             </button>
           </label>
+
+          <div className="space-y-2 md:col-span-2">
+            <span className="text-sm font-medium">Tags</span>
+            <div className="flex min-h-12 flex-wrap gap-2 rounded-md border border-ui-border-base bg-ui-bg-field px-3 py-2">
+              {tagList.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className="inline-flex items-center rounded-full border border-ui-border-base bg-ui-bg-base px-3 py-1 text-xs font-medium text-ui-fg-base"
+                  onClick={() => removeTag(tag)}
+                >
+                  #{tag}
+                </button>
+              ))}
+              <input
+                className="min-w-32 flex-1 bg-transparent text-sm outline-none"
+                placeholder="Type tag and press Enter"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === ",") {
+                    event.preventDefault()
+                    addTag(event.currentTarget.value)
+                    event.currentTarget.value = ""
+                  }
+                }}
+              />
+            </div>
+            <p className="text-xs text-ui-fg-subtle">Press Enter or comma to add tags. Click a tag to remove it.</p>
+          </div>
 
         </div>
 

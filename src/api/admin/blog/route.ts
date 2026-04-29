@@ -1,4 +1,5 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
+import { authenticate } from "@medusajs/framework/http"
 import { BLOG_MODULE } from "../../../modules/blog"
 import BlogModuleService from "../../../modules/blog/service"
 
@@ -9,6 +10,7 @@ type BlogPostInput = {
   content?: string
   image?: string
   thumbnail?: string
+  tags?: string
   author?: string
   category?: string
   date?: string
@@ -32,6 +34,7 @@ const normalizePostInput = (input: BlogPostInput) => {
     content: input.content ?? "",
     image: input.image ?? "",
     thumbnail: input.thumbnail ?? "",
+    tags: input.tags ?? "",
     author: input.author ?? "",
     category: input.category ?? "",
     date: input.date ?? new Date().toISOString().slice(0, 10),
@@ -49,11 +52,13 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 }
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
+  await authenticate(req, res)
+
   const payload = normalizePostInput(req.body as BlogPostInput)
 
-  if (!payload.title) {
+  if (!payload.title || !payload.slug || !payload.author) {
     res.status(400).json({
-      message: "Title is required.",
+      message: "Title, slug, and author are required.",
     })
 
     return

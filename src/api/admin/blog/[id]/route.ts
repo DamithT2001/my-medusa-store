@@ -1,4 +1,5 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
+import { authenticate } from "@medusajs/framework/http"
 import { BLOG_MODULE } from "../../../../modules/blog"
 import BlogModuleService from "../../../../modules/blog/service"
 
@@ -9,6 +10,7 @@ type BlogPostInput = {
   content?: string
   image?: string
   thumbnail?: string
+  tags?: string
   author?: string
   category?: string
   date?: string
@@ -32,6 +34,7 @@ const normalizePostInput = (input: BlogPostInput, currentSlug?: string) => {
     ...(input.content !== undefined ? { content: input.content } : {}),
     ...(input.image !== undefined ? { image: input.image } : {}),
     ...(input.thumbnail !== undefined ? { thumbnail: input.thumbnail } : {}),
+    ...(input.tags !== undefined ? { tags: input.tags } : {}),
     ...(input.author !== undefined ? { author: input.author } : {}),
     ...(input.category !== undefined ? { category: input.category } : {}),
     ...(input.date !== undefined ? { date: input.date } : {}),
@@ -50,10 +53,24 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 }
 
 export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
+  await authenticate(req, res)
+
   const { id } = req.params
   const blogModuleService: BlogModuleService = req.scope.resolve(BLOG_MODULE)
   const currentPost = await blogModuleService.retrievePost(id)
   const updates = normalizePostInput(req.body as BlogPostInput, currentPost.slug)
+  const nextTitle = updates.title ?? currentPost.title
+  const nextSlug = updates.slug ?? currentPost.slug
+  const nextAuthor = updates.author ?? currentPost.author
+
+  if (!nextTitle || !nextSlug || !nextAuthor) {
+    res.status(400).json({
+      message: "Title, slug, and author are required.",
+    })
+
+    return
+  }
+
   const post = await blogModuleService.updatePosts({
     id,
     ...updates,
@@ -65,6 +82,8 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
 }
 
 export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
+  await authenticate(req, res)
+
   const { id } = req.params
   const blogModuleService: BlogModuleService = req.scope.resolve(BLOG_MODULE)
 
