@@ -10,11 +10,27 @@ type BlogPostInput = {
   content?: string
   image?: string
   thumbnail?: string
-  tags?: string
+  tags?: string[] | string | null
   author?: string
   category?: string
   date?: string
   status?: "draft" | "published"
+}
+
+const normalizeTags = (tags?: string[] | string | null) => {
+  if (!tags) {
+    return []
+  }
+
+  const rawTags = Array.isArray(tags) ? tags : tags.split(",")
+
+  return Array.from(
+    new Set(
+      rawTags
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+    )
+  )
 }
 
 const slugify = (value: string) =>
@@ -34,7 +50,7 @@ const normalizePostInput = (input: BlogPostInput, currentSlug?: string) => {
     ...(input.content !== undefined ? { content: input.content } : {}),
     ...(input.image !== undefined ? { image: input.image } : {}),
     ...(input.thumbnail !== undefined ? { thumbnail: input.thumbnail } : {}),
-    ...(input.tags !== undefined ? { tags: input.tags } : {}),
+    ...(input.tags !== undefined ? { tags: normalizeTags(input.tags) } : {}),
     ...(input.author !== undefined ? { author: input.author } : {}),
     ...(input.category !== undefined ? { category: input.category } : {}),
     ...(input.date !== undefined ? { date: input.date } : {}),

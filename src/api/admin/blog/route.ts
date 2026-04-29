@@ -10,11 +10,27 @@ type BlogPostInput = {
   content?: string
   image?: string
   thumbnail?: string
-  tags?: string
+  tags?: string[] | string | null
   author?: string
   category?: string
   date?: string
   status?: "draft" | "published"
+}
+
+const normalizeTags = (tags?: string[] | string | null) => {
+  if (!tags) {
+    return []
+  }
+
+  const rawTags = Array.isArray(tags) ? tags : tags.split(",")
+
+  return Array.from(
+    new Set(
+      rawTags
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+    )
+  )
 }
 
 const slugify = (value: string) =>
@@ -34,7 +50,7 @@ const normalizePostInput = (input: BlogPostInput) => {
     content: input.content ?? "",
     image: input.image ?? "",
     thumbnail: input.thumbnail ?? "",
-    tags: input.tags ?? "",
+    tags: normalizeTags(input.tags),
     author: input.author ?? "",
     category: input.category ?? "",
     date: input.date ?? new Date().toISOString().slice(0, 10),

@@ -8,7 +8,7 @@ const Post = model.define("post", {
   content: model.text(),
   image: model.text(),
   thumbnail: model.text(),
-  tags: model.text(),
+  tags: model.json().nullable(),
   author: model.text(),
   category: model.text(),
   date: model.text(),
