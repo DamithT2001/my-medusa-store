@@ -1,5 +1,5 @@
 import { Container, Heading } from "@medusajs/ui"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Link, useNavigate } from "react-router-dom"
 import BlogForm, { BlogPostFormValues } from "../blog-form"
 import { sdk } from "../../../lib/sdk"
@@ -10,6 +10,7 @@ type BlogPostResponse = {
 
 const BlogCreatePage = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const createMutation = useMutation({
     mutationFn: (values: BlogPostFormValues) =>
@@ -18,6 +19,7 @@ const BlogCreatePage = () => {
         body: values,
       }),
     onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["blog-posts"] })
       await navigate("/blog")
     },
   })
