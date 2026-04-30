@@ -38,9 +38,23 @@ const defaultValues: BlogPostFormValues = {
   status: "draft",
 }
 
+const normalizeTags = (tags?: string): string => {
+  if (!tags) return ""
+
+  try {
+    const parsed = JSON.parse(tags)
+    if (Array.isArray(parsed)) {
+      return parsed.map(String).join(", ")
+    }
+  } catch {}
+
+  return tags
+}
+
 const mergeValues = (values?: Partial<BlogPostFormValues>): BlogPostFormValues => ({
   ...defaultValues,
   ...values,
+  tags: normalizeTags(values?.tags),
 })
 
 const BlogForm = ({
@@ -155,17 +169,17 @@ const BlogForm = ({
           </p>
         </div>
 
-        {error ? (
+        {error && (
           <div className="rounded-md border border-ui-fg-error bg-ui-bg-error px-4 py-3 text-sm text-ui-fg-error">
             {error}
           </div>
-        ) : null}
+        )}
 
-        {success ? (
+        {success && (
           <div className="rounded-md border border-ui-fg-success bg-ui-bg-success px-4 py-3 text-sm text-ui-fg-success">
             {success}
           </div>
-        ) : null}
+        )}
 
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-2">
@@ -317,7 +331,7 @@ const BlogForm = ({
             {isSubmitting ? "Saving changes..." : submitLabel}
           </button>
 
-          {onDelete ? (
+          {onDelete && (
             <button
               type="button"
               className="rounded-md border border-ui-border-base px-4 py-2 text-sm font-medium text-ui-fg-error disabled:cursor-not-allowed disabled:opacity-60"
@@ -326,7 +340,7 @@ const BlogForm = ({
             >
               {isDeleting ? "Deleting..." : deleteLabel}
             </button>
-          ) : null}
+          )}
         </div>
       </form>
     </div>
