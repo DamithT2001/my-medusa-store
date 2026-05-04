@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react"
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react"
 import { Heading } from "@medusajs/ui"
+import { EditorContent, useEditor, type Editor } from "@tiptap/react"
+import StarterKit from "@tiptap/starter-kit"
 import { sdk } from "../../lib/sdk"
 
 export type BlogPostFormValues = {
@@ -23,6 +25,13 @@ type BlogFormProps = {
   onDelete?: () => Promise<void>
   deleteLabel?: string
   isDeleting?: boolean
+}
+
+type ToolbarButtonProps = {
+  active?: boolean
+  disabled?: boolean
+  onClick: () => void
+  children: ReactNode
 }
 
 const defaultValues: BlogPostFormValues = {
@@ -57,6 +66,44 @@ const mergeValues = (values?: Partial<BlogPostFormValues>): BlogPostFormValues =
   tags: normalizeTags(values?.tags),
 })
 
+const escapeHtml = (value: string) =>
+  value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;")
+
+const formatEditorContent = (value?: string) => {
+  if (!value) {
+    return ""
+  }
+
+  if (/<\/?[a-z][\s\S]*>/i.test(value)) {
+    return value
+  }
+
+  return value
+    .split(/\n{2,}/)
+    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`)
+    .join("")
+}
+
+const ToolbarButton = ({ active = false, disabled = false, onClick, children }: ToolbarButtonProps) => (
+  <button
+    type="button"
+    className={`rounded-md border px-3 py-1.5 text-sm font-medium transition ${
+      active
+        ? "border-ui-border-interactive bg-ui-bg-interactive text-ui-fg-on-inverted"
+        : "border-ui-border-base bg-ui-bg-base text-ui-fg-base"
+    } disabled:cursor-not-allowed disabled:opacity-50`}
+    onClick={onClick}
+    disabled={disabled}
+  >
+    {children}
+  </button>
+)
+
 const BlogForm = ({
   initialValues,
   submitLabel,
@@ -71,6 +118,25 @@ const BlogForm = ({
   const [success, setSuccess] = useState<string | null>(null)
   const [uploadingField, setUploadingField] = useState<"image" | null>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2, 3],
+        },
+      }),
+    ],
+    content: formatEditorContent(mergeValues(initialValues).content),
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML()
+
+      setValues((current) => ({
+        ...current,
+        content: html === "<p></p>" ? "" : html,
+      }))
+      setSuccess(null)
+    },
+  })
 
   const tagList = values.tags
     .split(",")
@@ -78,8 +144,17 @@ const BlogForm = ({
     .filter(Boolean)
 
   useEffect(() => {
-    setValues(mergeValues(initialValues))
-  }, [initialValues])
+    const nextValues = mergeValues(initialValues)
+    setValues(nextValues)
+
+    if (editor) {
+      const nextContent = formatEditorContent(nextValues.content)
+
+      if (editor.getHTML() !== nextContent) {
+        editor.commands.setContent(nextContent || "", { emitUpdate: false })
+      }
+    }
+  }, [editor, initialValues])
 
   const updateField = (field: keyof BlogPostFormValues, value: string) => {
     setValues((current) => ({
@@ -157,6 +232,14 @@ const BlogForm = ({
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Failed to save the post.")
     }
+  }
+
+  const runEditorCommand = (callback: (editor: Editor) => void) => {
+    if (!editor) {
+      return
+    }
+
+    callback(editor)
   }
 
   return (
@@ -259,12 +342,74 @@ const BlogForm = ({
 
         <label className="space-y-2 block">
           <span className="text-sm font-medium">Content</span>
-          <textarea
-            className="min-h-64 w-full rounded-md border border-ui-border-base bg-ui-bg-field px-3 py-2 text-sm outline-none transition focus:border-ui-border-interactive"
-            value={values.content}
-            onChange={(event) => updateField("content", event.target.value)}
-            placeholder="Write the full blog post content here."
-          />
+          <div className="rounded-md border border-ui-border-base bg-ui-bg-field">
+            <div className="flex flex-wrap gap-2 border-b border-ui-border-base p-3">
+              <ToolbarButton
+                active={editor?.isActive("paragraph")}
+                disabled={!editor}
+                onClick={() => runEditorCommand((instance) => instance.chain().focus().setParagraph().run())}
+              >
+                P
+              </ToolbarButton>
+              <ToolbarButton
+                active={editor?.isActive("heading", { level: 1 })}
+                disabled={!editor}
+                onClick={() => runEditorCommand((instance) => instance.chain().focus().toggleHeading({ level: 1 }).run())}
+              >
+                H1
+              </ToolbarButton>
+              <ToolbarButton
+                active={editor?.isActive("heading", { level: 2 })}
+                disabled={!editor}
+                onClick={() => runEditorCommand((instance) => instance.chain().focus().toggleHeading({ level: 2 }).run())}
+              >
+                H2
+              </ToolbarButton>
+              <ToolbarButton
+                active={editor?.isActive("heading", { level: 3 })}
+                disabled={!editor}
+                onClick={() => runEditorCommand((instance) => instance.chain().focus().toggleHeading({ level: 3 }).run())}
+              >
+                H3
+              </ToolbarButton>
+              <ToolbarButton
+                active={editor?.isActive("bold")}
+                disabled={!editor}
+                onClick={() => runEditorCommand((instance) => instance.chain().focus().toggleBold().run())}
+              >
+                Bold
+              </ToolbarButton>
+              <ToolbarButton
+                active={editor?.isActive("italic")}
+                disabled={!editor}
+                onClick={() => runEditorCommand((instance) => instance.chain().focus().toggleItalic().run())}
+              >
+                Italic
+              </ToolbarButton>
+              <ToolbarButton
+                active={editor?.isActive("bulletList")}
+                disabled={!editor}
+                onClick={() => runEditorCommand((instance) => instance.chain().focus().toggleBulletList().run())}
+              >
+                Bullet List
+              </ToolbarButton>
+              <ToolbarButton
+                active={editor?.isActive("orderedList")}
+                disabled={!editor}
+                onClick={() => runEditorCommand((instance) => instance.chain().focus().toggleOrderedList().run())}
+              >
+                Ordered List
+              </ToolbarButton>
+            </div>
+
+            <EditorContent
+              editor={editor}
+              className="min-h-64 px-3 py-2 text-sm outline-none [&_.ProseMirror]:min-h-64 [&_.ProseMirror]:outline-none [&_.ProseMirror_h1]:text-3xl [&_.ProseMirror_h1]:font-semibold [&_.ProseMirror_h2]:text-2xl [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h3]:text-xl [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_p]:my-2 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-6"
+            />
+          </div>
+          <p className="text-xs text-ui-fg-subtle">
+            Use headings, bold, italic, bullet lists, and ordered lists. Content is saved as HTML.
+          </p>
         </label>
 
         <div className="grid gap-4 md:grid-cols-3">
