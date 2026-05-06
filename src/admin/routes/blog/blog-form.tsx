@@ -13,7 +13,7 @@ export type BlogPostFormValues = {
   tags: string
   author: string
   category: string
-  date: string
+  published_at: string
   status: "draft" | "published"
 }
 
@@ -43,7 +43,7 @@ const defaultValues: BlogPostFormValues = {
   tags: "",
   author: "",
   category: "",
-  date: new Date().toISOString().slice(0, 10),
+  published_at: new Date().toISOString().slice(0, 10),
   status: "draft",
 }
 
@@ -307,13 +307,13 @@ const BlogForm = ({
             />
           </label>
 
-          <label className="space-y-2">
+              <label className="space-y-2">
             <span className="text-sm font-medium">Publish Date</span>
             <input
               type="date"
               className="w-full rounded-md border border-ui-border-base bg-ui-bg-field px-3 py-2 text-sm outline-none transition focus:border-ui-border-interactive"
-              value={values.date}
-              onChange={(event) => updateField("date", event.target.value)}
+              value={values.published_at}
+              onChange={(event) => updateField("published_at", event.target.value)}
             />
           </label>
 

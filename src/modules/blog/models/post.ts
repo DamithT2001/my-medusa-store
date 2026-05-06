@@ -11,7 +11,7 @@ const Post = model.define("post", {
   tags: model.json().nullable(),
   author: model.text(),
   category: model.text(),
-  date: model.text(),
+  published_at: model.dateTime().nullable(),
   status: model.enum(["draft", "published"]),
 })
 

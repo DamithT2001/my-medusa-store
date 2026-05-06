@@ -13,7 +13,7 @@ type BlogPostInput = {
   tags?: string[] | string | null
   author?: string
   category?: string
-  date?: string
+  published_at?: string
   status?: "draft" | "published"
 }
 
@@ -53,7 +53,7 @@ const normalizePostInput = (input: BlogPostInput) => {
     tags: normalizeTags(input.tags),
     author: input.author ?? "",
     category: input.category ?? "",
-    date: input.date ?? new Date().toISOString().slice(0, 10),
+    published_at: input.published_at ?? new Date().toISOString().slice(0, 10),
     status: input.status ?? "draft",
   }
 }

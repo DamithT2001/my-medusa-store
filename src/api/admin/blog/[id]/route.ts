@@ -13,7 +13,7 @@ type BlogPostInput = {
   tags?: string[] | string | null
   author?: string
   category?: string
-  date?: string
+  published_at?: string
   status?: "draft" | "published"
 }
 
@@ -53,7 +53,7 @@ const normalizePostInput = (input: BlogPostInput, currentSlug?: string) => {
     ...(input.tags !== undefined ? { tags: normalizeTags(input.tags) } : {}),
     ...(input.author !== undefined ? { author: input.author } : {}),
     ...(input.category !== undefined ? { category: input.category } : {}),
-    ...(input.date !== undefined ? { date: input.date } : {}),
+    ...(input.published_at !== undefined ? { published_at: input.published_at } : {}),
     ...(input.status !== undefined ? { status: input.status } : {}),
   }
 }
