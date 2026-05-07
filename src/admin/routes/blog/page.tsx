@@ -13,7 +13,7 @@ type BlogPost = {
   image: string
   author: string
   category: string
-  published_at?: string
+  published_at: string
   status: "draft" | "published"
   created_at?: string
   updated_at?: string
@@ -103,7 +103,13 @@ const BlogListPage = () => {
                         <div>{post.author || "-"}</div>
                         <div>{post.category || "-"}</div>
                       </td>
-                      <td className="px-4 py-4 text-xs text-ui-fg-subtle">{post.published_at || post.created_at || "-"}</td>
+                      <td className="px-4 py-4 text-xs text-ui-fg-subtle">
+                        {post.published_at
+                          ? new Date(post.published_at).toLocaleDateString()
+                          : post.created_at
+                            ? new Date(post.created_at).toLocaleDateString()
+                            : "-"}
+                      </td>
                       <td className="px-4 py-4">
                         <div className="flex flex-wrap gap-2">
                           <Link

@@ -43,12 +43,28 @@ const defaultValues: BlogPostFormValues = {
   tags: "",
   author: "",
   category: "",
-  published_at: new Date().toISOString().slice(0, 10),
+  published_at: (() => {
+    const today = new Date()
+
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(
+      today.getDate()
+    ).padStart(2, "0")}`
+  })(),
   status: "draft",
 }
 
-const normalizeTags = (tags?: string): string => {
+const normalizeTags = (tags?: any): string => {
   if (!tags) return ""
+
+  if (typeof tags === "string") return tags
+
+  if (Array.isArray(tags)) {
+    return tags.map(String).join(", ")
+  }
+
+  if (typeof tags === "object" && tags !== null) {
+    return Object.keys(tags).join(", ")
+  }
 
   try {
     const parsed = JSON.parse(tags)
@@ -57,13 +73,18 @@ const normalizeTags = (tags?: string): string => {
     }
   } catch {}
 
-  return tags
+  return String(tags)
 }
 
 const mergeValues = (values?: Partial<BlogPostFormValues>): BlogPostFormValues => ({
   ...defaultValues,
   ...values,
   tags: normalizeTags(values?.tags),
+  published_at: values?.published_at
+    ? values.published_at.includes("T")
+      ? values.published_at.slice(0, 10)
+      : values.published_at
+    : defaultValues.published_at,
 })
 
 const escapeHtml = (value: string) =>
@@ -307,7 +328,7 @@ const BlogForm = ({
             />
           </label>
 
-              <label className="space-y-2">
+          <label className="space-y-2">
             <span className="text-sm font-medium">Publish Date</span>
             <input
               type="date"
