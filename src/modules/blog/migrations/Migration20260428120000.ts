@@ -1,7 +1,7 @@
 import { Migration } from "@medusajs/framework/mikro-orm/migrations"
 
 export class Migration20260428120000 extends Migration {
-  async up(): Promise<void> {
+  override async up(): Promise<void> {
     this.addSql(`
       create table if not exists "post" (
         "id" text not null,
@@ -30,7 +30,7 @@ export class Migration20260428120000 extends Migration {
     `)
   }
 
-  async down(): Promise<void> {
+  override async down(): Promise<void> {
     this.addSql('drop table if exists "post" cascade;')
   }
 }
